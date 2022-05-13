@@ -23,54 +23,40 @@ app.get("/api/hello", function (req, res) {
 
 
 
-app.get('/api', (req,res) =>{
-  let date = new Date();
-  
-  let result = {
-    unix: date.getTime(),
-    utc: date.toUTCString()
-  }
-
-  res.send(result);
-});
-
-app.get('/api/:date',(req,res) => {
-
-  //Handling data parameters with invalid format
-
-  if(!Date.parse(req.params.date) && !Number(req.params.date))
-  {
-    return res.send({error: "Invalid Date"});
-  }
-
-
-  //Checking for conditions when date parameter is given in microseconds.
-
-  else if(!(/[-]/.test(req.params.date)) && Number(req.params.date))
-  {
-    let date = new Date(Number(req.params.date));
-
-    return res.send({
-      unix: date.getTime(),
-      utc: date.toUTCString()
-    });
-  } 
-
-  //For handling regular test cases when date parameter is in a valid date format.
-
-  let date = new Date(req.params.date);
-
-  let result = {
-    unix: date.getTime(),
-    utc: date.toUTCString()
-  }
-
-  res.status(200).send(result);
-});
-
-
-
 // listen for requests :)
-var listener = app.listen(port, function () {
-  console.log('Your app is listening on port ' + port);
+var listener = app.listen(process.env.PORT, function () {
+  console.log('Your app is listening on port ' + listener.address().port);
 });
+
+
+let responseObject = {}
+
+app.get('/api/timestamp/:input', (request, response) => {
+  let input = request.params.input
+  
+  if(input.includes('-')){
+    /* Date String */
+    responseObject['unix'] = new Date(input).getTime()
+    responseObject['utc'] = new Date(input).toUTCString()
+  }else{
+    /* Timestamp */
+    input = parseInt(input)
+    
+    responseObject['unix'] = new Date(input).getTime()
+    responseObject['utc'] = new Date(input).toUTCString()
+  }
+  
+  if(!responseObject['unix'] || !responseObject['utc']){
+    response.json({error: 'Invalid Date'})
+  }
+  
+  
+  response.json(responseObject)
+})
+
+app.get('/api/timestamp', (request, response) => {
+  responseObject['unix'] = new Date().getTime()
+  responseObject['utc'] = new Date().toUTCString()
+  
+  response.json(responseObject)
+})
